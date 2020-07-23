@@ -98,9 +98,11 @@
             android:id="@+id/rangeview_movable"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:count="10"
+            app:count="12"
             app:start="3"
-            app:end="6"
+            app:end="4"
+            app:maxDistance="1"
+            app:minDistance="1"
             app:movable="true"
             />
 

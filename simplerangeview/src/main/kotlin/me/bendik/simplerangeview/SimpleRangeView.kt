@@ -18,6 +18,7 @@ package me.bendik.simplerangeview
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
 import android.os.Parcel
@@ -27,6 +28,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import me.bendik.simplerangeview.R.attr.maxDistance
+import kotlin.math.abs
 import kotlin.properties.Delegates
 import kotlin.properties.ReadWriteProperty
 
@@ -99,20 +101,20 @@ open class SimpleRangeView @JvmOverloads constructor(
 
     // Internal
 
-    lateinit private var paint: Paint
-    lateinit private var paintFixed: Paint
-    lateinit private var paintActive: Paint
-    lateinit private var paintTick: Paint
-    lateinit private var paintFixedTick: Paint
-    lateinit private var paintActiveTick: Paint
-    lateinit private var paintActiveThumb: Paint
-    lateinit private var paintFixedThumb: Paint
-    lateinit private var paintActiveFocusThumb: Paint
-    lateinit private var paintText: Paint
-    lateinit private var paintActiveText: Paint
-    lateinit private var paintFixedText: Paint
-    lateinit private var paintActiveThumbText: Paint
-    lateinit private var paintFixedThumbText: Paint
+    private lateinit var paint: Paint
+    private lateinit var paintFixed: Paint
+    private lateinit var paintActive: Paint
+    private lateinit var paintTick: Paint
+    private lateinit var paintFixedTick: Paint
+    private lateinit var paintActiveTick: Paint
+    private lateinit var paintActiveThumb: Paint
+    private lateinit var paintFixedThumb: Paint
+    private lateinit var paintActiveFocusThumb: Paint
+    private lateinit var paintText: Paint
+    private lateinit var paintActiveText: Paint
+    private lateinit var paintFixedText: Paint
+    private lateinit var paintActiveThumbText: Paint
+    private lateinit var paintFixedThumbText: Paint
 
     private var currentLeftFocusRadiusPx = ValueWrapper(0f)
     private var currentRightFocusRadiusPx = ValueWrapper(0f)
@@ -473,39 +475,13 @@ open class SimpleRangeView @JvmOverloads constructor(
                     return true
                 }
 
-                if (isStartPressed) {
-                    val _start = closestValidPosition(getPositionByXCoord(x))
-                    if (validatePositionForStart(_start)) {
-                        if (start != _start) {
-                            start = _start
-                            invalidate()
-                            onTrackRangeListener?.onStartRangeChanged(this, start)
-                        }
-                    }
-                    return true
-                }
-
-                if (isEndPressed) {
-                    val _end = closestValidPosition(getPositionByXCoord(x))
-                    if (validatePositionForEnd(_end)) {
-                        if (end != _end) {
-                            end = _end
-                            invalidate()
-                            onTrackRangeListener?.onEndRangeChanged(this, end)
-                        }
-                    }
-                    return true
-                }
-
                 if (isInTargetZone(start, x, y)) {
-                    isStartPressed = true
-                    fadeIn(currentLeftFocusRadiusPx, activeThumbFocusRadius)
+                    isRangeMoving = true
                     return true
                 }
 
                 if (isInTargetZone(end, x, y)) {
-                    isEndPressed = true
-                    fadeIn(currentRightFocusRadiusPx, activeThumbFocusRadius)
+                    isRangeMoving = true
                     return true
                 }
 
@@ -518,37 +494,22 @@ open class SimpleRangeView @JvmOverloads constructor(
                     }
 
                     val tmpX = closestValidPosition(getPositionByXCoord(x))
-                    val xS = Math.abs(tmpX - start)
-                    val xE = Math.abs(tmpX - end)
+                    val xS = abs(tmpX - start)
+                    val xE = abs(tmpX - end)
 
                     if (xS < xE && ((end-tmpX) >= getMinimalDistance()) && ((end-tmpX) <= getMaximalDistance())) {
-                        start = tmpX
-                        isStartPressed = true
-                        fadeIn(currentLeftFocusRadiusPx, activeThumbFocusRadius)
-                        onTrackRangeListener?.onStartRangeChanged(this, start)
+                        isRangeMoving = true
                     } else if (xS >= xE && ((tmpX-start) >= getMinimalDistance()) && ((tmpX-start) <= getMaximalDistance())) {
-                        end = tmpX
-                        isEndPressed = true
-                        fadeIn(currentRightFocusRadiusPx, activeThumbFocusRadius)
-                        onTrackRangeListener?.onEndRangeChanged(this, end)
+                        isRangeMoving = true
                     }
-                    return true
+                    return false
                 }
             }
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 isRangeMoving = false
-
-                if (isStartPressed) {
-                    isStartPressed = false
-                    fadeOut(currentLeftFocusRadiusPx, activeThumbFocusRadius)
-                }
-
-                if (isEndPressed) {
-                    isEndPressed = false
-                    fadeOut(currentRightFocusRadiusPx, activeThumbFocusRadius)
-                }
-
+                isStartPressed = false
+                isEndPressed = false
                 onChangeRangeListener?.onRangeChanged(this, start, end)
             }
         }
@@ -868,8 +829,9 @@ open class SimpleRangeView @JvmOverloads constructor(
         var showFixedTicks: Boolean = false
         var showLabels: Boolean = false
 
-        internal constructor(superState: Parcelable) : super(superState)
+        internal constructor(superState: Parcelable?) : super(superState)
 
+        @SuppressLint("NewApi")
         private constructor(input: Parcel, classLoader: ClassLoader) : super(input, classLoader) {
             this.labelColor = input.readInt()
             this.activeLabelColor = input.readInt()

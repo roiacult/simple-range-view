@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -60,6 +61,14 @@ public class BasicExampleFragment extends Fragment implements SimpleRangeView.On
         rangeView.setActiveThumbLabelColor(getResources().getColor(R.color.colorAccent));
         rangeView.setActiveFocusThumbColor(getResources().getColor(R.color.colorAccent));
         rangeView.setActiveFocusThumbAlpha(0.26f);
+
+        SimpleRangeView movable = (SimpleRangeView) view.findViewById(R.id.rangeview_movable);
+        movable.setOnChangeRangeListener(new SimpleRangeView.OnChangeRangeListener() {
+            @Override
+            public void onRangeChanged(@NotNull SimpleRangeView rangeView, int start, int end) {
+                Toast.makeText(BasicExampleFragment.this.getContext(),"start => "+start+", end => "+end,Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Nullable @Override
